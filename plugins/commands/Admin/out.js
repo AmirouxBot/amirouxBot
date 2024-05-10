@@ -1,166 +1,141 @@
 const config = {
-    name: "out",
-    aliases: ["leave"],
-    description:
-        "Leave the group/all groups, please note that the out all will not include the message request/spam group",
-    usage: "[groupID/all]",
-    cooldown: 5,
+    name: "المسؤولين",
+    aliases: ["المسؤولين_عن_البوت"],
+    version: "1.0.1",
+    description: "List, Add or remove moderators",
     permissions: [2],
-    credits: "XaviaTeam",
-    isAbsolute: true,
-};
-
-const langData = {
-    vi_VN: {
-        noThreadToOut: "Không có nhóm nào để rời.",
-        invalidThreadIDs: "ID nhóm không hợp lệ.",
-        confirm: "React 👍 để xác nhận.",
-        moderator: "Quản trị Bot",
-        out: "⚠️ THÔNG BÁO ⚠️\n\nBot đã được nhận lệnh rời khỏi nhóm!\nLiên hệ {authorName} để biết thêm chi tiết.",
-        successOut: "Đã rời khỏi {successCount} nhóm.",
-        failOut: "Không thể rời khỏi nhóm:\n{fail}",
-        error: "Đã có lỗi xảy ra, vui lòng thử lại sau.",
-    },
-    en_US: {
-        noThreadToOut: "There is no group to leave.",
-        invalidThreadIDs: "Invalid group IDs.",
-        confirm: "React 👍 to confirm.",
-        moderator: "Bot Moderator",
-        out: "⚠️ NOTICE ⚠️\n\nBot has been ordered to leave the group!\nContact {authorName} for more details.",
-        successOut: "Left {successCount} groups.",
-        failOut: "Unable to leave group:\n{fail}",
-        error: "An error has occurred, please try again later.",
-    },
-    ar_SY: {
-        noThreadToOut: "لا توجد مجموعة لتغادر.",
-        invalidThreadIDs: "معرفات المجموعة غير صالحة.",
-        confirm: "تفاعل ب 👍 للتأكيد.",
-        moderator: "مشرف الروبوت",
-        out: "⚠️ انتبه⚠️\n\nأمر البوت بمغادرة المجموعة!\nاتصال {authorName} لمزيد من التفاصيل.",
-        successOut: "غادر {successCount} المجموعات.",
-        failOut: "غير قادر على مغادرة المجموعة:\n{fail}",
-        error: "حصل خطأ. الرجاء المحاوله مرة اخرى.",
-    },
-};
-
-function out(threadID) {
-    return new Promise((resolve) => {
-        global.api.removeUserFromGroup(global.botID, threadID, (err) => {
-            if (err) {
-                console.error(err);
-                return resolve(null);
-            }
-            resolve(true);
-        });
-    });
+    cooldown: 5
 }
 
-async function verifyAccess({ message, getLang, eventData, data }) {
-    try {
-        const { reaction, userID } = message;
-        if (reaction != "👍") return;
-
-        let threadIDs = eventData.threadIDs;
-
-        const isHavingCurrentThreadID = threadIDs.some(
-            (threadID) => threadID == message.threadID
-        );
-        if (isHavingCurrentThreadID) {
-            threadIDs = threadIDs.filter(
-                (threadID) => threadID != message.threadID
-            );
-            threadIDs.push(message.threadID);
-        }
-
-        let authorName = data?.user?.info?.name || getLang("moderator");
-
-        const fail = [];
-        for (const threadID of threadIDs) {
-            await message.send(
-                {
-                    body: getLang("out", { authorName }),
-                    mentions: [{ tag: authorName, id: userID }],
-                },
-                threadID
-            );
-
-            const result = await out(threadID);
-            if (result == null) fail.push(threadID);
-
-            await global.utils.sleep(500);
-        }
-
-        const sendTarget =
-            isHavingCurrentThreadID &&
-            !fail.some((threadID) => threadID == message.threadID)
-                ? userID
-                : null;
-
-        const successCount = threadIDs.length - fail.length;
-
-        await message.send(getLang("successOut", { successCount }), sendTarget);
-        if (fail.length > 0)
-            await message.send(
-                getLang("failOut", { fail: fail.join("\n") }),
-                sendTarget
-            );
-
-        return;
-    } catch (e) {
-        console.error(e);
-        return message.send(getLang("error"));
+const langData = {
+    "en_US": {
+        "notAbsolute": "You are not an absolute moderator.",
+        "alreadyModerator": "This user is already a moderator.",
+        "notModerator": "This user is not a moderator.",
+        "missingTarget": "Please mention or reply someone.",
+        "add.success": "Added to moderator list:\n{added}",
+        "remove.success": "Removed from moderator list:\n{removed}",
+        "list": "Moderators:\n{moderators}",
+        "error": "Error: {error}"
+    },
+    "vi_VN": {
+        "notAbsolute": "Bạn không phải là quản trị viên tuyệt đối.",
+        "alreadyModerator": "Người dùng này đã là quản trị viên.",
+        "notModerator": "Người dùng này không phải là quản trị viên.",
+        "missingTarget": "Vui lòng nhắc đến hoặc trả lời một người.",
+        "add.success": "Đã thêm vào danh sách quản trị viên:\n{added}",
+        "remove.success": "Đã xóa khỏi danh sách quản trị viên:\n{removed}",
+        "list": "Quản trị viên:\n{moderators}",
+        "error": "Lỗi: {error}"
+    },
+    "ar_SY": {
+        "notAbsolute": "أنت لست المسؤول المطلق.",
+        "alreadyModerator": "هذا المستخدم هو بالفعل مسؤول.",
+        "notModerator": "هذا المستخدم ليس مسؤولاً.",
+        "missingTarget": "يرجى ذكر أو الرد على شخص.",
+        "add.success": "تمت الإضافة إلى قائمة المسؤولين:\n{added}",
+        "remove.success": "تمت إزالته من قائمة السمؤولين:\n{removed}",
+        "list": "المسؤولين:\n{moderators}",
+        "error": "خطأ: {error}"
     }
 }
 
 async function onCall({ message, args, getLang }) {
+    const { type, messageReply, mentions, senderID, reply } = message;
+
     try {
-        const input = args[0]?.toLowerCase();
-        const threadIDs = [];
+        const isAbsolute = global.config.ABSOLUTES.some(id => id == senderID);
 
-        if (input == "all") {
-            const threadList = (
-                (await global.api.getThreadList(100, null, ["INBOX"])) || []
-            ).filter(
-                (thread) =>
-                    thread.threadID != message.threadID &&
-                    thread.isGroup &&
-                    thread.isSubscribed
-            );
+        let query = args[0]?.toLowerCase();
+        switch (query) {
+            case "add":
+                {
+                    if (!isAbsolute) return reply(getLang("notAbsolute"));
 
-            if (threadList.length == 0)
-                return message.reply(getLang("noThreadToOut"));
+                    let success = [];
+                    if (type == "message_reply") {
+                        let userID = messageReply.senderID;
+                        if (global.config.MODERATORS.some(id => id == userID)) return reply(getLang("alreadyModerator"));
+                        global.config.MODERATORS.push(String(userID));
+                        success.push({
+                            id: userID,
+                            name: (await global.controllers.Users.getInfo(userID))?.name || userID
+                        });
+                    } else if (Object.keys(mentions).length > 0) {
+                        for (const userID in mentions) {
+                            if (global.config.MODERATORS.some(id => id == userID)) continue;
+                            global.config.MODERATORS.push(String(userID));
+                            success.push({
+                                id: userID,
+                                name: mentions[userID].replace(/@/g, '')
+                            });
+                        }
+                    } else return reply(getLang("missingTarget"));
 
-            threadIDs.push(...threadList.map((thread) => thread.threadID));
-        } else if (args.length > 0) {
-            const inputThreadIDs = args
-                .map((threadID) => threadID.replace(/[^0-9]/g, ""))
-                .filter((arg) => arg.length >= 16 && !isNaN(arg));
+                    global.config.save();
+                    reply({
+                        body: getLang("add.success", { added: success.map(user => user.name).join(", ") }),
+                        mentions: success.map(user => ({ tag: user.name, id: user.id }))
+                    });;
 
-            if (inputThreadIDs.length == 0)
-                return message.reply(getLang("invalidThreadIDs"));
-
-            threadIDs.push(...inputThreadIDs);
-        } else {
-            threadIDs.push(message.threadID);
-        }
-
-        return message
-            .reply(getLang("confirm"))
-            .then((_) => _.addReactEvent({ threadIDs, callback: verifyAccess }))
-            .catch((e) => {
-                if (e.message) {
-                    console.error(e.message);
-                    return message.reply(getLang("error"));
+                    break;
                 }
-            });
-    } catch (e) {
-        console.error(e);
-        return message.reply(getLang("error"));
+            case "remove":
+            case "rm":
+            case "delete":
+            case "del":
+                {
+                    if (!isAbsolute) return reply(getLang("notAbsolute"));
+
+                    let success = [];
+                    if (type == "message_reply") {
+                        let userID = messageReply.senderID;
+                        if (!global.config.MODERATORS.some(id => id == userID)) return reply(getLang("notModerator"));
+                        global.config.MODERATORS = global.config.MODERATORS.filter(id => id != userID);
+                        success.push({
+                            id: userID,
+                            name: (await global.controllers.Users.getInfo(userID))?.name || userID
+                        });
+                    } else if (Object.keys(mentions).length > 0) {
+                        for (const userID in mentions) {
+                            if (!global.config.MODERATORS.some(id => id == userID)) continue;
+                            global.config.MODERATORS = global.config.MODERATORS.filter(id => id != userID);
+                            success.push({
+                                id: userID,
+                                name: mentions[userID].replace(/@/g, '')
+                            });
+                        }
+                    } else return reply(getLang("missingTarget"));
+
+                    global.config.save();
+                    reply({
+                        body: getLang("remove.success", { removed: success.map(user => user.name).join(", ") }),
+                        mentions: success.map(user => ({ tag: user.name, id: user.id }))
+                    });;
+
+                    break;
+                }
+            default:
+                {
+                    let moderators = global.config.MODERATORS.map(async id => {
+                        let info = await global.controllers.Users.getInfo(id);
+                        return `${info?.name || id} (${id})`;
+                    });
+                    moderators = await Promise.all(moderators);
+
+                    reply(getLang("list", { moderators: moderators.join("\n") }));
+                    break;
+                }
+        }
+    } catch (error) {
+        reply(getLang("error", { error }));
     }
+
+    return;
 }
 
 export default {
     config,
     langData,
-    onCall,
-};
+    onCall
+}
