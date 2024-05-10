@@ -1,6 +1,6 @@
 const config = {
-    name: "delmsg",
-    aliases: ["deletemsg", "delmessage", "deletemessage"],
+    name: "حذف_رسالة",
+    aliases: ["احذف", "حذف", "حذف رسالة"],
     description: "delete group message",
     usage: "[all]",
     cooldown: 3,
@@ -156,4 +156,4 @@ export default {
     config,
     langData,
     onCall
-}
+        }
