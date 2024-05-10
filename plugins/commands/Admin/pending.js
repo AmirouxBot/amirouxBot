@@ -1,176 +1,140 @@
 const config = {
-    name: "pending",
-    description: "Approve or deny a pending message",
-    usage: "",
-    cooldown: 3,
+    name: "طرد",
+    aliases: ["اخرج"],
+    description: "Leave the group/all groups, please note that the out all will not include the message request/spam group",
+    usage: "[groupID/all]",
+    cooldown: 5,
     permissions: [2],
     credits: "XaviaTeam",
-    isAbsolute: true,
-};
+    isAbsolute: true
+}
 
 const langData = {
-    vi_VN: {
-        invalidIndexes: "Số thứ tự không hợp lệ",
-        successDeny: "Đã từ chối thành công {success} nhóm",
-        failDeny: "Một số nhóm không thể từ chối được:\n{fail}",
-        denied: "Rất tiếc, nhóm của bạn đã bị từ chối",
-        successApprove: "Đã phê duyệt thành công {success} nhóm",
-        failApprove: "Một số nhóm không thể phê duyệt được:\n{fail}",
-        approved:
-            "Chúc mừng, nhóm của bạn đã được phê duyệt\n{prefix}help để xem danh sách lệnh",
-        pendingThreadList:
-            "Danh sách nhóm đang chờ phê duyệt:\n{pendingThread}\n\nReply theo cú pháp:\nĐể từ chối: deny <index/all>\nĐể chấp nhận: approve <index/all>",
-        pendingThreadListEmpty: "Không có nhóm nào đang chờ phê duyệt",
-        error: "Đã có lỗi xảy ra, vui lòng thử lại sau",
+    "vi_VN": {
+        "noThreadToOut": "Không có nhóm nào để rời.",
+        "invalidThreadIDs": "ID nhóm không hợp lệ.",
+        "confirm": "React 👍 để xác nhận.",
+        "moderator": "Quản trị Bot",
+        "out": "⚠️ THÔNG BÁO ⚠️\n\nBot đã được nhận lệnh rời khỏi nhóm!\nLiên hệ {authorName} để biết thêm chi tiết.",
+        "successOut": "Đã rời khỏi {successCount} nhóm.",
+        "failOut": "Không thể rời khỏi nhóm:\n{fail}",
+        "error": "Đã có lỗi xảy ra, vui lòng thử lại sau."
     },
-    en_US: {
-        invalidIndexes: "Invalid indexes",
-        successDeny: "Denied successfully {success} group(s)",
-        failDeny: "Some groups could not be denied:\n{fail}",
-        denied: "Sorry, your group has been denied",
-        successApprove: "Approved successfully {success} group(s)",
-        failApprove: "Some groups could not be approved:\n{fail}",
-        approved:
-            "Congratulations, your group has been approved\n{prefix}help to see the list of commands",
-        pendingThreadList:
-            "List of pending threads:\n{pendingThread}\n\nReply with the following syntax:\nTo deny: deny <index/all>\nTo approve: approve <index/all>",
-        pendingThreadListEmpty: "There are no pending threads",
-        error: "An error has occurred, please try again later",
+    "en_US": {
+        "noThreadToOut": "There is no group to leave.",
+        "invalidThreadIDs": "Invalid group IDs.",
+        "confirm": "React 👍 to confirm.",
+        "moderator": "Bot Moderator",
+        "out": "⚠️ NOTICE ⚠️\n\nBot has been ordered to leave the group!\nContact {authorName} for more details.",
+        "successOut": "Left {successCount} groups.",
+        "failOut": "Unable to leave group:\n{fail}",
+        "error": "An error has occurred, please try again later."
     },
-    ar_SY: {
-        invalidIndexes: "فهارس غير صالحة",
-        successDeny: "تم الرفض بنجاح {success} مجموعة(محموعات)",
-        failDeny: "لا يمكن إنكار بعض الجماعات:\n{fail}",
-        denied: "آسف ، تم رفض مجموعتك",
-        successApprove: "تمت الموافقة بنجاح {success} مجموعة(مجموعات)",
-        failApprove: "لا يمكن الموافقة على بعض المجموعات:\n{fail}",
-        approved:
-            "تهانينا ، تمت الموافقة على مجموعتك\n{prefix}تساعد في رؤية قائمة الأوامر",
-        pendingThreadList:
-            "قائمة المواضيع المعلقة:\n{pendingThread}\n\nالرد بالصيغة التالية:\nللرفض: رفض <index/all>\nليوافق: يوافق <index/all>",
-        pendingThreadListEmpty: "لا توجد مواضيع معلقة",
-        error: "حصل خطأ. الرجاء المحاوله مرة اخرى",
-    },
-};
-
-function handleError(e) {
-    console.error(e);
-    return null;
-}
-
-function out(botID, cTID) {
-    return new Promise((resolve) => {
-        global.api.removeUserFromGroup(botID, cTID, (err) => {
-            if (err) return resolve(null), console.error(err);
-            resolve(true);
-        });
-    });
-}
-
-async function callback({ message, getLang, eventData }) {
-    const { pendingThread } = eventData;
-
-    const input = message.body.split(" ");
-    const indexes =
-        input[1] == "all" || input[1] == "-a"
-            ? pendingThread.map((_, index) => index)
-            : input
-                  .slice(1)
-                  .map((index) => parseInt(index) - 1)
-                  .filter(
-                      (index) => index >= 0 && index < pendingThread.length
-                  );
-
-    let success = 0,
-        fail = [];
-    if (input[0] == "deny" || input[0] == "d") {
-        if (indexes.length == 0)
-            return message.reply(getLang("invalidIndexes"));
-
-        const threads = indexes.map((index) => pendingThread[index]);
-
-        for (const thread of threads) {
-            const { threadID: cTID } = thread;
-
-            let _info = await message
-                .send(getLang("denied"), cTID)
-                .then((data) => data)
-                .catch(handleError);
-            let _out = await out(global.botID, cTID);
-
-            if (_info == null || _out == null) fail.push(cTID);
-            else success++;
-
-            await global.utils.sleep(500);
-        }
-
-        message.reply(getLang("successDeny", { success }));
-        if (fail.length > 0)
-            message.reply(getLang("failDeny", { fail: fail.join("\n") }));
-    } else {
-        if (indexes.length == 0)
-            return message.reply(getLang("invalidIndexes"));
-
-        const threads = indexes.map((index) => pendingThread[index]);
-
-        for (const thread of threads) {
-            const { threadID: cTID } = thread;
-            let threadPrefix =
-                global.data.threads.get(cTID)?.data?.prefix ||
-                global.config.PREFIX;
-
-            let _info = await message
-                .send(
-                    getLang("approved", {
-                        prefix: threadPrefix,
-                    }),
-                    cTID
-                )
-                .then((data) => data)
-                .catch(handleError);
-
-            if (_info == null) fail.push(cTID);
-            else success++;
-
-            await global.utils.sleep(500);
-        }
-
-        message.reply(getLang("successApprove", { success }));
-        if (fail.length > 0)
-            message.reply(getLang("failApprove", { fail: fail.join("\n") }));
+    "ar_SY": {
+        "noThreadToOut": "لا توجد مجموعة لتغادر.",
+        "invalidThreadIDs": "معرفات المجموعة غير صالحة.",
+        "confirm": "تفاعل ب 👍 للتأكيد.",
+        "moderator": "مشرف الروبوت",
+        "out": "⚠️ انتبه⚠️\n\nأمر البوت بمغادرة المجموعة!\nاتصال {شغل انتيک} لمزيد من التفاصيل.",
+        "successOut": "غادر {successCount} المجموعات.",
+        "failOut": "غير قادر على مغادرة المجموعة:\n{fail}",
+        "error": "حصل خطأ. الرجاء المحاوله مرة اخرى."
     }
-
-    return;
 }
 
-async function onCall({ message, getLang }) {
-    try {
-        const SPAM =
-            (await global.api.getThreadList(100, null, ["OTHER"])) || [];
-        const PENDING =
-            (await global.api.getThreadList(100, null, ["PENDING"])) || [];
+function out(threadID) {
+    return new Promise(resolve => {
+        global.api.removeUserFromGroup(global.botID, threadID, err => {
+            if (err) {
+                console.error(err);
+                return resolve(null);
+            };
+            resolve(true);
+        })
+    })
+}
 
-        const pendingThread = [...SPAM, ...PENDING].filter(
-            (thread) => thread.isGroup && thread.isSubscribed
-        );
-        if (pendingThread.length == 0)
-            return message.reply(getLang("pendingThreadListEmpty"));
+async function verifyAccess({ message, getLang, eventData, data }) {
+    try {
+        const { reaction, userID } = message;
+        if (reaction != "👍") return;
+
+        let threadIDs = eventData.threadIDs;
+
+        const isHavingCurrentThreadID = threadIDs.some(threadID => threadID == message.threadID);
+        if (isHavingCurrentThreadID) {
+            threadIDs = threadIDs.filter(threadID => threadID != message.threadID);
+            threadIDs.push(message.threadID);
+        }
+
+        let authorName = data?.user?.info?.name || getLang("moderator");
+
+        const fail = [];
+        for (const threadID of threadIDs) {
+            await message.send({
+                body: getLang("out", { authorName }),
+                mentions: [{ tag: authorName, id: userID }]
+            }, threadID);
+
+            const result = await out(threadID);
+            if (result == null) fail.push(threadID);
+
+            global.sleep(500);
+        }
+
+        const sendTarget = isHavingCurrentThreadID && !fail.some(threadID => threadID == message.threadID) ? userID : null;
+
+        const successCount = threadIDs.length - fail.length;
+
+        await message.send(getLang("successOut", { successCount }), sendTarget);
+        if (fail.length > 0) await message.send(getLang("failOut", { fail: fail.join("\n") }), sendTarget);
+
+        return;
+    } catch (e) {
+        console.error(e);
+        return message.send(getLang("error"));
+    }
+}
+
+async function onCall({ message, args, getLang }) {
+    try {
+        const input = args[0]?.toLowerCase();
+        const threadIDs = [];
+
+        if (input == "all") {
+            const threadList = (await global.api.getThreadList(100, null, ["INBOX"]) || [])
+                .filter(thread =>
+                    thread.threadID != message.threadID &&
+                    thread.isGroup &&
+                    thread.isSubscribed
+                );
+
+            if (threadList.length == 0) return message.reply(getLang("noThreadToOut"));
+
+            threadIDs.push(...threadList.map(thread => thread.threadID));
+        } else if (args.length > 0) {
+            const inputThreadIDs =
+                args
+                    .map(threadID => threadID.replace(/[^0-9]/g, ""))
+                    .filter(arg => arg.length >= 16 && !isNaN(arg));
+
+            if (inputThreadIDs.length == 0) return message.reply(getLang("invalidThreadIDs"));
+
+            threadIDs.push(...inputThreadIDs);
+        } else {
+            threadIDs.push(message.threadID);
+        }
+
 
         return message
-            .reply(
-                getLang("pendingThreadList", {
-                    pendingThread: pendingThread
-                        .map(
-                            (thread, index) =>
-                                `${index + 1}. ${thread.name} (${
-                                    thread.threadID
-                                })`
-                        )
-                        .join("\n"),
-                })
-            )
-            .then((_) => _.addReplyEvent({ pendingThread, callback }))
-            .catch((e) => console.error(e));
+            .reply(getLang("confirm"))
+            .then(_ => _.addReactEvent({ threadIDs, callback: verifyAccess }))
+            .catch(e => {
+                if (e.message) {
+                    console.error(e.message);
+                    return message.reply(getLang("error"));
+                }
+            });
     } catch (e) {
         console.error(e);
         return message.reply(getLang("error"));
@@ -180,5 +144,5 @@ async function onCall({ message, getLang }) {
 export default {
     config,
     langData,
-    onCall,
-};
+    onCall
+        }
