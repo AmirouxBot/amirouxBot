@@ -1,5 +1,5 @@
 const config = {
-    name: "user",
+    name: "حظر",
     description: "ban/unban a user",
     version: "0.0.1-beta",
     usage: "[tag/reply]",
@@ -20,6 +20,12 @@ const langData = {
         "noData": "No data available...",
         "success": "Success!",
         "error": "error"
+    },
+    "ar_SY": {
+        "missingTarget": "يرجى وضع علامة/الرد على المستخدم الذي تريد حظره.",
+        "noData": "لا تتوافر بيانات...",
+        "success": "نجاح!",
+        "error": "خطأ"
     }
 }
 
@@ -62,4 +68,4 @@ export default {
     config,
     langData,
     onCall
-}
+            }
