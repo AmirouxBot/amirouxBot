@@ -1,12 +1,12 @@
 const config = {
-    name: "restart",
+    name: "اعادة_التشغيل",
     aliases: ["rs", "rest", "reboot"],
     permissions: [2],
     isAbsolute: true
 }
 
 async function onCall({ message, getLang }) {
-    await message.reply("Restarting...");
+    await message.reply("جاري اعادة التشغيل...");
     global.restart();
 }
 
