@@ -1,6 +1,6 @@
 const config = {
-    name: "sendnoti",
-    aliases: ["sendnotification"],
+    name: "التنويه",
+    aliases: ["ارسال_التنويه"],
     description: "Send notification to all groups",
     usage: "[message/reply]",
     permissions: [2],
@@ -17,7 +17,7 @@ const langData = {
         "sendnoti.message": "== ⌈ THÔNG BÁO ⌋ ==\n\n{message}",
         "sendnoti.success": "Đã gửi thông báo đến {count} nhóm",
         "sendnoti.fail": "Không thể gửi thông báo đến {count} nhóm"
-    },
+     },
     "ar_SY": {
         "sendnoti.message": "== ⌈ إـشــعـــار ⌋ ==\n\n{message}",
         "sendnoti.success": "إرسال اشعار إلى {count} المجموعات",
@@ -91,4 +91,4 @@ export default {
     config,
     langData,
     onCall
-}
+        }
